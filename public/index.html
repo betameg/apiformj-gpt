@@ -1,0 +1,2663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Midjourney 图片生成器</title>
+    <!-- Markdown渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <!-- 代码高亮库 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #ecf0f1;
+            box-sizing: border-box;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .main-wrapper {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+        /* Sidebar Styles */
+        .sidebar {
+            width: 320px;
+            background: rgba(44, 62, 80, 0.9);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f39c12;
+            margin-bottom: 18px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .mode-selector {
+            display: flex;
+            background-color: #34495e;
+            border-radius: 8px;
+            padding: 4px;
+            margin-bottom: 15px;
+        }
+
+        .mode-option {
+            flex: 1;
+            padding: 8px 12px;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #bdc3c7;
+            transition: all 0.2s ease;
+        }
+
+        .mode-option.active {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .mode-option:hover:not(.active) {
+            background-color: #3c5a78;
+            color: #ecf0f1;
+        }
+
+        .new-chat-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .new-chat-btn {
+            padding: 8px 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .conversation-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background-color: #34495e;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .conversation-item:hover {
+            background-color: #3c5a78;
+            border-color: #5a708a;
+        }
+
+        .conversation-item.active {
+            background-color: #3498db;
+            border-color: #2980b9;
+        }
+
+        .conversation-title {
+            font-size: 14px;
+            color: #ecf0f1;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .conversation-meta {
+            font-size: 12px;
+            color: #bdc3c7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .conversation-mode-icon {
+            font-size: 14px;
+            margin-left: 8px;
+        }
+
+        .mode-ai {
+            color: #3498db;
+        }
+
+        .mode-mj {
+            color: #e74c3c;
+        }
+
+        .sidebar-footer {
+            padding: 15px;
+            border-top: 1px solid #5a708a;
+        }
+
+        .user-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background-color: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .user-name {
+            color: #ecf0f1;
+            font-size: 14px;
+        }
+
+        .settings-btn {
+            padding: 6px;
+            background-color: transparent;
+            border: 1px solid #5a708a;
+            border-radius: 4px;
+            color: #bdc3c7;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .settings-btn:hover {
+            background-color: #34495e;
+            color: #ecf0f1;
+        }
+
+        /* Main Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header-section {
+            padding: 15px 20px;
+            background-color: #2c3e50;
+            border-bottom: 1px solid #5a708a;
+            text-align: center;
+        }
+
+        .chat-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: #2c3e50;
+        }
+
+        .messages-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .input-wrapper {
+            padding: 15px 20px;
+            background-color: #34495e;
+            border-top: 1px solid #5a708a;
+        }
+        h1 {
+            color: #f1c40f;
+            margin: 0;
+            font-size: 24px;
+        }
+        input[type="password"] {
+            width: calc(100% - 22px);
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #5a708a;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="password"]::placeholder {
+            color: #bdc3c7;
+        }
+
+        .prompt-action-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        textarea#promptInput {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #5a708a;
+            border-radius: 8px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            font-size: 16px;
+            box-sizing: border-box;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        textarea#promptInput::placeholder {
+            color: #bdc3c7;
+        }
+        button {
+            padding: 12px 25px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #generateButton {
+            min-width: 100px;
+            height: 50px;
+        }
+        /* Chat Messages Container */
+        #messagesContainer {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Individual Message Styles */
+        .message {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.3s ease-in;
+            backdrop-filter: blur(10px);
+            position: relative;
+            font-size: 16px;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #bdc3c7;
+        }
+
+        .message-type {
+            font-weight: 600;
+            color: #f39c12;
+            font-size: 15px;
+        }
+
+        .message-timestamp {
+            color: #95a5a6;
+            font-size: 13px;
+        }
+
+        .message-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: none;
+            gap: 8px;
+        }
+
+        .message:hover .message-actions {
+            display: flex;
+        }
+
+        .message-action-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 6px;
+            padding: 6px 8px;
+            color: #ecf0f1;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .message-action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .user-message {
+            border-left: 4px solid #3498db;
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .system-message {
+            border-left: 4px solid #2ecc71;
+            background: rgba(46, 204, 113, 0.1);
+        }
+
+        .ai-message {
+            border-left: 4px solid #9b59b6;
+            background: rgba(155, 89, 182, 0.1);
+        }
+
+        .message-content {
+            margin-bottom: 12px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .message-content.editing {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .message-edit-textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #ecf0f1;
+            font-size: 16px;
+            line-height: 1.6;
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+        }
+
+        .message-edit-textarea:focus {
+            outline: none;
+        }
+
+        .message-edit-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+
+        .edit-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .edit-btn.save {
+            background: #27ae60;
+            color: white;
+        }
+
+        .edit-btn.cancel {
+            background: #7f8c8d;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Markdown渲染样式 */
+        .markdown-content {
+            color: #ecf0f1;
+            line-height: 1.6;
+        }
+
+        .markdown-content h1, .markdown-content h2, .markdown-content h3,
+        .markdown-content h4, .markdown-content h5, .markdown-content h6 {
+            color: #f39c12;
+            margin: 16px 0 8px 0;
+            font-weight: 600;
+        }
+
+        .markdown-content p {
+            margin: 8px 0;
+        }
+
+        .markdown-content ul, .markdown-content ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .markdown-content li {
+            margin: 4px 0;
+        }
+
+        .markdown-content blockquote {
+            border-left: 4px solid #3498db;
+            margin: 16px 0;
+            padding: 8px 16px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .markdown-content code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .markdown-content pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+        }
+
+        .markdown-content th, .markdown-content td {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .markdown-content th {
+            background: rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+        }
+
+        /* 思考过程样式 */
+        .thinking-section {
+            background: rgba(155, 89, 182, 0.1);
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            border-radius: 12px;
+            margin: 12px 0;
+            overflow: hidden;
+        }
+
+        .thinking-header {
+            background: rgba(155, 89, 182, 0.2);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .thinking-header:hover {
+            background: rgba(155, 89, 182, 0.3);
+        }
+
+        .thinking-title {
+            color: #9b59b6;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .thinking-stats {
+            font-size: 12px;
+            color: #bdc3c7;
+        }
+
+        .thinking-content {
+            padding: 16px;
+            display: none;
+            border-top: 1px solid rgba(155, 89, 182, 0.2);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .thinking-content.expanded {
+            display: block;
+        }
+
+        .thinking-toggle {
+            color: #9b59b6;
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .thinking-toggle.expanded {
+            transform: rotate(180deg);
+        }
+
+        .final-response {
+            margin-top: 16px;
+        }
+
+        .message-prompt {
+            color: #ecf0f1;
+            font-style: italic;
+            background-color: #34495e;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .message-image {
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .message-image img {
+            max-width: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #5a708a;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .message-image img:hover {
+            transform: scale(1.02);
+        }
+
+        .message-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .message-buttons button {
+            padding: 6px 12px;
+            font-size: 12px;
+            background-color: #2ecc71;
+            margin: 0;
+        }
+
+        .message-buttons button:hover {
+            background-color: #27ae60;
+        }
+
+        .message-download {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .message-download button {
+            background-color: #9b59b6;
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 0;
+        }
+
+        .message-download button:hover {
+            background-color: #8e44ad;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-top: 50px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Image Preview Modal */
+        .image-preview-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            cursor: pointer;
+        }
+
+        .image-preview-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .image-preview-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        .image-preview-close:hover {
+            color: #f1c40f;
+        }
+
+        /* Settings Modal */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .settings-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(52, 73, 94, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 35px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            width: 90%;
+            max-width: 600px;
+            color: #ecf0f1;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-modal h2 {
+            color: #f39c12;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-align: center;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .settings-section {
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .settings-section h3 {
+            color: #3498db;
+            margin-bottom: 18px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .settings-field {
+            margin-bottom: 18px;
+        }
+
+        .settings-field label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ecf0f1;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .settings-field input, .settings-field select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ecf0f1;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .settings-field input:focus, .settings-field select:focus {
+            outline: none;
+            border-color: #3498db;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .test-result {
+            margin-top: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .test-result.success {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid #2ecc71;
+            color: #2ecc71;
+        }
+
+        .test-result.error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 1px solid #e74c3c;
+            color: #e74c3c;
+        }
+
+        .settings-field input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .settings-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        .settings-actions button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-cancel {
+            background-color: #7f8c8d;
+            color: white;
+        }
+
+        .btn-cancel:hover {
+            background-color: #6c7b7d;
+        }
+
+        .btn-save {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background-color: #229954;
+        }
+        #loading {
+            display: none;
+            font-size: 16px;
+            color: #f1c40f;
+            text-align: center;
+        }
+        #error {
+            color: #e74c3c;
+            font-weight: bold;
+            text-align: center;
+        }
+        .alert-message {
+            background-color: #e67e22;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: normal;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* Auth Modal Styles */
+        #authModal {
+            display: flex; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7); align-items: center; justify-content: center;
+        }
+        .auth-modal-content {
+            background-color: #34495e; padding: 40px; border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.4); text-align: center;
+            width: 90%; max-width: 400px; color: #ecf0f1; position: relative;
+        }
+        .auth-modal-content h2 { color: #f1c40f; margin-bottom: 25px; font-size: 24px; }
+        .auth-modal-content button {
+            padding: 12px 25px; background-color: #3498db; color: white; border: none;
+            border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%;
+            transition: background-color 0.3s ease; margin-top: 10px;
+        }
+        .auth-modal-content button:hover { background-color: #2980b9; }
+
+        /* Message Box Styles */
+        #messageBox { /* For Modal */
+            background-color: #f1c40f; color: #2c3e50; padding: 10px 20px;
+            border-radius: 5px; margin-bottom: 20px; font-weight: bold;
+            display: none; text-align: center;
+        }
+        #appMessageBox { /* For main app messages */
+            padding: 10px; border-radius: 5px; text-align: center; font-weight: bold;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-wrapper {
+                flex-direction: column;
+                height: 100vh;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+                border-right: none;
+                border-bottom: 1px solid #5a708a;
+            }
+            .conversations-list {
+                max-height: 120px;
+            }
+            .content-area {
+                flex: 1;
+            }
+            .header-section {
+                padding: 10px 15px;
+            }
+            .messages-wrapper {
+                padding: 15px;
+            }
+            .input-wrapper {
+                padding: 10px 15px;
+            }
+            .prompt-action-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+            #generateButton {
+                width: 100%;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            textarea#promptInput {
+                max-height: 100px;
+            }
+            #messagesContainer {
+                max-width: 100%;
+            }
+            .settings-modal-content {
+                width: 95%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="authModal">
+        <div class="auth-modal-content">
+            <div id="messageBox"></div> <!-- Modal message box -->
+            <h2>请输入访问密码</h2>
+            <input type="password" id="accessCodeInput" placeholder="访问密码">
+            <button id="authConfirmBtn">确认</button>
+        </div>
+    </div>
+
+    <div class="main-wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">对话历史</div>
+
+                <div class="mode-selector">
+                    <div class="mode-option active" data-mode="mj">🎨 MJ画图</div>
+                    <div class="mode-option" data-mode="ai">💬 AI对话</div>
+                </div>
+
+                <div class="new-chat-section">
+                    <button class="new-chat-btn" id="newChatBtn">新对话</button>
+                </div>
+            </div>
+
+            <div class="conversations-list" id="conversationsList">
+                <!-- 对话列表将在这里动态生成 -->
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-section">
+                    <div class="user-info">
+                        <div class="user-avatar">U</div>
+                        <div class="user-name">用户</div>
+                    </div>
+                    <button class="settings-btn" id="settingsBtn">⚙️</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-area">
+            <div class="header-section">
+                <h1 id="appTitle">Midjourney 图片生成器</h1>
+                <div id="currentModeDisplay" style="text-align: center; margin-bottom: 10px; color: #3498db; font-weight: bold;">
+                    当前模式：🎨 MJ画图模式
+                </div>
+                <div class="alert-message">
+                    注意：本地保存的图片在容器重建后可能会丢失。请及时下载！
+                </div>
+                <!-- appMessageBox will be inserted here by JS -->
+                <div id="loading">正在生成...请耐心等待...</div>
+                <div id="error"></div>
+            </div>
+
+            <div class="chat-section">
+                <div class="messages-wrapper">
+                    <div id="messagesContainer">
+                        <div class="empty-state">
+                            <p>开始对话，生成的图片将显示在这里</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-wrapper">
+                    <div class="prompt-action-group">
+                        <textarea id="promptInput" placeholder="输入您的图像描述（例如：一只可爱的猫咪在阳光下的草地上）" rows="3"></textarea>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <button id="generateButton">生成图片</button>
+                            <button id="summarizeButton" style="display: none; background-color: #9b59b6; font-size: 14px; padding: 8px 16px;">总结对话</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div id="imagePreviewModal" class="image-preview-modal">
+        <span class="image-preview-close">&times;</span>
+        <img id="previewImage" class="image-preview-content" alt="Preview">
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="settings-modal">
+        <div class="settings-modal-content">
+            <h2>设置</h2>
+
+            <div class="settings-section">
+                <h3>Midjourney API 配置</h3>
+                <div class="settings-field">
+                    <label for="mjApiSecret">MJ API Secret:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="password" id="mjApiSecret" placeholder="输入您的 MJ API Secret" style="flex: 1;">
+                        <button type="button" id="testMjBtn" style="padding: 14px 20px; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 500; transition: all 0.3s ease;">测试连接</button>
+                    </div>
+                    <div id="mjTestResult" class="test-result"></div>
+                </div>
+                <div class="settings-field">
+                    <label for="mjDomain">MJ服务域名:</label>
+                    <input type="text" id="mjDomain" placeholder="https://aium.cc">
+                    <small style="color: #bdc3c7; font-size: 14px; margin-top: 8px; display: block;">
+                        输入MJ服务的完整域名地址
+                    </small>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>OpenAI API 配置</h3>
+                <div class="settings-field">
+                    <label for="openaiApiKey">OpenAI API Key:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="password" id="openaiApiKey" placeholder="输入您的 OpenAI API Key" style="flex: 1;">
+                        <button type="button" id="testOpenaiBtn" style="padding: 14px 20px; background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 500; transition: all 0.3s ease;">测试连接</button>
+                    </div>
+                    <div id="openaiTestResult" class="test-result"></div>
+                </div>
+                <div class="settings-field">
+                    <label for="openaiBaseUrl">API基础URL:</label>
+                    <input type="text" id="openaiBaseUrl" placeholder="https://api.openai.com">
+                    <small style="color: #bdc3c7; font-size: 14px; margin-top: 8px; display: block;">
+                        支持OpenAI官方API、NewAPI、One-API等兼容服务
+                    </small>
+                </div>
+                <div class="settings-field">
+                    <label for="defaultModel">默认对话模型:</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="defaultModel" style="flex: 1; padding: 10px; border: 1px solid #5a708a; border-radius: 5px; background-color: #2c3e50; color: #ecf0f1;">
+                            <option value="">请先获取模型列表</option>
+                        </select>
+                        <button type="button" id="fetchModelsBtn" style="padding: 10px 15px; background-color: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer;">获取模型</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3>数据管理</h3>
+                <div class="settings-field">
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" id="exportDataBtn" style="flex: 1; padding: 10px; background-color: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">导出数据</button>
+                        <button type="button" id="importDataBtn" style="flex: 1; padding: 10px; background-color: #9b59b6; color: white; border: none; border-radius: 5px; cursor: pointer;">导入数据</button>
+                        <input type="file" id="importFileInput" accept=".json" style="display: none;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-actions">
+                <button class="btn-cancel" id="settingsCancelBtn">取消</button>
+                <button class="btn-save" id="settingsSaveBtn">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const promptInput = document.getElementById('promptInput');
+        const generateButton = document.getElementById('generateButton');
+        const messagesContainer = document.getElementById('messagesContainer');
+        const loadingDiv = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+        const modalMessageBox = document.getElementById('messageBox');
+
+        const authModal = document.getElementById('authModal');
+        const accessCodeInput = document.getElementById('accessCodeInput');
+        const authConfirmBtn = document.getElementById('authConfirmBtn');
+
+        // Image preview modal elements
+        const imagePreviewModal = document.getElementById('imagePreviewModal');
+        const previewImage = document.getElementById('previewImage');
+        const previewClose = document.querySelector('.image-preview-close');
+
+        // Sidebar elements
+        const newChatBtn = document.getElementById('newChatBtn');
+        const conversationsList = document.getElementById('conversationsList');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const modeSelector = document.querySelectorAll('.mode-option');
+        const currentModeDisplay = document.getElementById('currentModeDisplay');
+        const appTitle = document.getElementById('appTitle');
+        const summarizeButton = document.getElementById('summarizeButton');
+
+        // Settings modal elements
+        const settingsModal = document.getElementById('settingsModal');
+        const settingsCancelBtn = document.getElementById('settingsCancelBtn');
+        const settingsSaveBtn = document.getElementById('settingsSaveBtn');
+        const mjApiSecretInput = document.getElementById('mjApiSecret');
+        const mjDomainInput = document.getElementById('mjDomain');
+        const openaiApiKeyInput = document.getElementById('openaiApiKey');
+        const openaiBaseUrlInput = document.getElementById('openaiBaseUrl');
+        const defaultModelSelect = document.getElementById('defaultModel');
+        const fetchModelsBtn = document.getElementById('fetchModelsBtn');
+        const testMjBtn = document.getElementById('testMjBtn');
+        const testOpenaiBtn = document.getElementById('testOpenaiBtn');
+        const exportDataBtn = document.getElementById('exportDataBtn');
+        const importDataBtn = document.getElementById('importDataBtn');
+        const importFileInput = document.getElementById('importFileInput');
+
+        // Test result elements
+        const mjTestResult = document.getElementById('mjTestResult');
+        const openaiTestResult = document.getElementById('openaiTestResult');
+
+        let messageIdCounter = 0;
+        let isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+        let currentConversationId = null;
+        let conversations = [];
+        let userId = 'default';
+        let currentMode = 'mj'; // 'mj' for Midjourney, 'ai' for AI chat
+        let userSettings = {
+            mjApiSecret: '',
+            mjDomain: 'https://aium.cc',
+            openaiApiKey: '',
+            openaiBaseUrl: 'https://api.openai.com',
+            defaultModel: 'gpt-3.5-turbo'
+        };
+
+        // --- Textarea auto-resize logic ---
+        const promptInputStyle = getComputedStyle(promptInput);
+        const promptMinHeight = parseInt(promptInputStyle.minHeight);
+        const promptMaxHeight = parseInt(promptInputStyle.maxHeight);
+
+        function autoResizeTextarea() {
+            promptInput.style.height = 'auto';
+            let scrollHeight = promptInput.scrollHeight;
+            if (scrollHeight < promptMinHeight) {
+                promptInput.style.height = promptMinHeight + 'px';
+                promptInput.style.overflowY = 'hidden';
+            } else if (scrollHeight > promptMaxHeight) {
+                promptInput.style.height = promptMaxHeight + 'px';
+                promptInput.style.overflowY = 'auto';
+            } else {
+                promptInput.style.height = scrollHeight + 'px';
+                promptInput.style.overflowY = 'hidden';
+            }
+        }
+        promptInput.addEventListener('input', autoResizeTextarea);
+        autoResizeTextarea();
+
+        // --- App Message Handling ---
+        const appMessageBoxElement = document.createElement('div');
+        appMessageBoxElement.id = 'appMessageBox';
+        appMessageBoxElement.style.display = 'none';
+        loadingDiv.parentNode.insertBefore(appMessageBoxElement, loadingDiv);
+
+        // --- Image Preview Modal Handling ---
+        function openImagePreview(imageSrc) {
+            previewImage.src = imageSrc;
+            imagePreviewModal.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeImagePreview() {
+            imagePreviewModal.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        // Close modal when clicking the close button
+        previewClose.addEventListener('click', closeImagePreview);
+
+        // Close modal when clicking outside the image
+        imagePreviewModal.addEventListener('click', (e) => {
+            if (e.target === imagePreviewModal) {
+                closeImagePreview();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && imagePreviewModal.style.display === 'block') {
+                closeImagePreview();
+            }
+            if (e.key === 'Escape' && settingsModal.style.display === 'block') {
+                closeSettingsModal();
+            }
+        });
+
+        // --- Local Storage Management ---
+        function saveToLocalStorage(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (error) {
+                console.error('Failed to save to localStorage:', error);
+            }
+        }
+
+        function loadFromLocalStorage(key, defaultValue = null) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : defaultValue;
+            } catch (error) {
+                console.error('Failed to load from localStorage:', error);
+                return defaultValue;
+            }
+        }
+
+        function saveUserSettings() {
+            saveToLocalStorage('userSettings', userSettings);
+        }
+
+        function loadUserSettings() {
+            const saved = loadFromLocalStorage('userSettings');
+            if (saved) {
+                userSettings = { ...userSettings, ...saved };
+            }
+        }
+
+        function saveConversations() {
+            saveToLocalStorage('conversations', conversations);
+        }
+
+        function loadConversations() {
+            conversations = loadFromLocalStorage('conversations', []);
+        }
+
+        function saveCurrentConversationId() {
+            saveToLocalStorage('currentConversationId', currentConversationId);
+        }
+
+        function loadCurrentConversationId() {
+            currentConversationId = loadFromLocalStorage('currentConversationId');
+        }
+
+        function saveCurrentMode() {
+            saveToLocalStorage('currentMode', currentMode);
+        }
+
+        function loadCurrentMode() {
+            currentMode = loadFromLocalStorage('currentMode', 'mj');
+        }
+
+        // --- URL Validation ---
+
+        function validateUrl(url) {
+            try {
+                new URL(url);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
+        function showValidationError(element, message) {
+            element.style.borderColor = '#e74c3c';
+            element.title = message;
+            setTimeout(() => {
+                element.style.borderColor = '#5a708a';
+                element.title = '';
+            }, 3000);
+        }
+
+        function showValidationSuccess(element) {
+            element.style.borderColor = '#27ae60';
+            setTimeout(() => {
+                element.style.borderColor = '#5a708a';
+            }, 2000);
+        }
+
+        // Real-time URL validation
+        mjDomainInput.addEventListener('input', () => {
+            const domain = mjDomainInput.value.trim();
+            if (domain && !validateUrl(domain)) {
+                showValidationError(mjDomainInput, '请输入有效的URL格式');
+            } else if (domain) {
+                showValidationSuccess(mjDomainInput);
+            }
+        });
+
+        openaiBaseUrlInput.addEventListener('input', () => {
+            const baseUrl = openaiBaseUrlInput.value.trim();
+            if (baseUrl && !validateUrl(baseUrl)) {
+                showValidationError(openaiBaseUrlInput, '请输入有效的URL格式');
+            } else if (baseUrl) {
+                showValidationSuccess(openaiBaseUrlInput);
+            }
+        });
+
+        // --- Connection Testing ---
+        async function testConnection(type) {
+            let config, button, buttonText, resultDiv;
+
+            if (type === 'openai') {
+                config = {
+                    apiKey: openaiApiKeyInput.value.trim(),
+                    baseUrl: openaiBaseUrlInput.value.trim() || 'https://api.openai.com'
+                };
+                button = testOpenaiBtn;
+                buttonText = '测试连接';
+                resultDiv = openaiTestResult;
+
+                if (!config.apiKey) {
+                    showTestResult(resultDiv, '请先输入 OpenAI API Key', false);
+                    return;
+                }
+
+                if (!validateUrl(config.baseUrl)) {
+                    showTestResult(resultDiv, '请输入有效的API基础URL', false);
+                    return;
+                }
+            } else if (type === 'midjourney') {
+                config = {
+                    apiSecret: mjApiSecretInput.value.trim(),
+                    domain: mjDomainInput.value.trim() || 'https://aium.cc'
+                };
+                button = testMjBtn;
+                buttonText = '测试连接';
+                resultDiv = mjTestResult;
+
+                if (!config.apiSecret) {
+                    showTestResult(resultDiv, '请先输入 MJ API Secret', false);
+                    return;
+                }
+
+                if (!validateUrl(config.domain)) {
+                    showTestResult(resultDiv, '请输入有效的MJ服务域名', false);
+                    return;
+                }
+            }
+
+            button.textContent = '测试中...';
+            button.disabled = true;
+            button.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+            resultDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ type, config })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showTestResult(resultDiv, result.message, true);
+                    if (type === 'openai') {
+                        showValidationSuccess(openaiApiKeyInput);
+                        showValidationSuccess(openaiBaseUrlInput);
+                    } else {
+                        showValidationSuccess(mjApiSecretInput);
+                        showValidationSuccess(mjDomainInput);
+                    }
+                } else {
+                    showTestResult(resultDiv, result.message, false);
+                    if (type === 'openai') {
+                        showValidationError(openaiApiKeyInput, result.message);
+                    } else {
+                        showValidationError(mjApiSecretInput, result.message);
+                    }
+                }
+            } catch (error) {
+                console.error('Connection test failed:', error);
+                showTestResult(resultDiv, '连接测试失败，请检查网络连接', false);
+            } finally {
+                button.textContent = buttonText;
+                button.disabled = false;
+                button.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
+            }
+        }
+
+        function showTestResult(resultDiv, message, isSuccess) {
+            resultDiv.textContent = message;
+            resultDiv.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            resultDiv.style.display = 'block';
+
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Connection test event listeners
+        testOpenaiBtn.addEventListener('click', () => testConnection('openai'));
+        testMjBtn.addEventListener('click', () => testConnection('midjourney'));
+
+        // --- Mode Management ---
+        function updateModeDisplay() {
+            const modeText = currentMode === 'mj' ? '🎨 MJ画图模式' : '💬 AI对话模式';
+            const titleText = currentMode === 'mj' ? 'Midjourney 图片生成器' : 'AI 智能对话助手';
+            const placeholderText = currentMode === 'mj'
+                ? '输入您的图像描述（例如：一只可爱的猫咪在阳光下的草地上）'
+                : '输入您想要对话的内容...';
+            const buttonText = currentMode === 'mj' ? '生成图片' : '发送消息';
+
+            currentModeDisplay.textContent = `当前模式：${modeText}`;
+            appTitle.textContent = titleText;
+            promptInput.placeholder = placeholderText;
+            generateButton.textContent = buttonText;
+
+            // 显示/隐藏总结按钮
+            summarizeButton.style.display = conversations.length > 0 &&
+                Array.from(messagesContainer.children).filter(el => el.classList.contains('message')).length > 2
+                ? 'block' : 'none';
+
+            // 更新模式选择器
+            modeSelector.forEach(option => {
+                option.classList.toggle('active', option.dataset.mode === currentMode);
+            });
+        }
+
+        function switchMode(newMode) {
+            if (newMode === currentMode) return;
+
+            currentMode = newMode;
+            saveCurrentMode();
+            updateModeDisplay();
+
+            // 清空当前对话
+            currentConversationId = null;
+            saveCurrentConversationId();
+            clearMessages();
+
+            // 重新加载对话列表
+            renderConversationsList();
+
+            showAppMessage(`已切换到${currentMode === 'mj' ? 'MJ画图' : 'AI对话'}模式`, 'info');
+        }
+
+        // Mode selector event listeners
+        modeSelector.forEach(option => {
+            option.addEventListener('click', () => {
+                switchMode(option.dataset.mode);
+            });
+        });
+
+        // --- OpenAI Model Management ---
+        async function fetchOpenAIModels() {
+            const apiKey = openaiApiKeyInput.value.trim();
+            const baseUrl = openaiBaseUrlInput.value.trim() || 'https://api.openai.com';
+
+            if (!apiKey) {
+                showAppMessage('请先输入 OpenAI API Key', 'error');
+                return;
+            }
+
+            if (!validateUrl(baseUrl)) {
+                showAppMessage('请输入有效的API基础URL', 'error');
+                return;
+            }
+
+            fetchModelsBtn.textContent = '获取中...';
+            fetchModelsBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/openai/models', {
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'base-url': baseUrl
+                    }
+                });
+
+                const data = await response.json();
+                console.log('Models API response:', data);
+
+                if (response.ok && data.models) {
+                    const modelCount = data.models.length;
+                    populateModelSelect(data.models);
+
+                    // 验证下拉列表中的选项数量
+                    const selectOptionCount = defaultModelSelect.options.length - 1; // 减去"请选择模型"选项
+
+                    showAppMessage(`模型列表获取成功！获取到 ${modelCount} 个模型，已添加 ${selectOptionCount} 个选项`, 'info');
+                    showValidationSuccess(openaiApiKeyInput);
+                    showValidationSuccess(openaiBaseUrlInput);
+                } else {
+                    showAppMessage(`获取模型失败：${data.error || '未知错误'}`, 'error');
+                    showValidationError(openaiApiKeyInput, data.error || '获取模型失败');
+                }
+            } catch (error) {
+                console.error('Failed to fetch models:', error);
+                showAppMessage('获取模型失败，请检查网络连接', 'error');
+            } finally {
+                fetchModelsBtn.textContent = '获取模型';
+                fetchModelsBtn.disabled = false;
+            }
+        }
+
+        function populateModelSelect(models) {
+            defaultModelSelect.innerHTML = '<option value="">请选择模型</option>';
+
+            // 确保models是数组
+            if (!Array.isArray(models)) {
+                console.error('Models is not an array:', models);
+                return;
+            }
+
+            console.log('Populating model select with', models.length, 'models:', models);
+
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.textContent = model.id;
+                if (model.id === userSettings.defaultModel) {
+                    option.selected = true;
+                }
+                defaultModelSelect.appendChild(option);
+            });
+
+            // 显示实际添加的选项数量
+            const optionCount = defaultModelSelect.options.length - 1; // 减去"请选择模型"选项
+            console.log('Added', optionCount, 'model options to select');
+        }
+
+        fetchModelsBtn.addEventListener('click', fetchOpenAIModels);
+
+        // --- Settings Modal Handling ---
+        function openSettingsModal() {
+            loadSettingsToModal();
+            settingsModal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSettingsModal() {
+            settingsModal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        function loadSettingsToModal() {
+            mjApiSecretInput.value = userSettings.mjApiSecret || '';
+            mjDomainInput.value = userSettings.mjDomain || 'https://aium.cc';
+            openaiApiKeyInput.value = userSettings.openaiApiKey || '';
+            openaiBaseUrlInput.value = userSettings.openaiBaseUrl || 'https://api.openai.com';
+            defaultModelSelect.value = userSettings.defaultModel || '';
+        }
+
+        function saveSettingsFromModal() {
+            // 验证URL格式
+            const mjDomain = mjDomainInput.value.trim();
+            const openaiBaseUrl = openaiBaseUrlInput.value.trim();
+
+            if (mjDomain && !validateUrl(mjDomain)) {
+                showAppMessage('MJ服务域名格式不正确', 'error');
+                showValidationError(mjDomainInput, 'URL格式不正确');
+                return;
+            }
+
+            if (openaiBaseUrl && !validateUrl(openaiBaseUrl)) {
+                showAppMessage('OpenAI API基础URL格式不正确', 'error');
+                showValidationError(openaiBaseUrlInput, 'URL格式不正确');
+                return;
+            }
+
+            userSettings.mjApiSecret = mjApiSecretInput.value.trim();
+            userSettings.mjDomain = mjDomain || 'https://aium.cc';
+            userSettings.openaiApiKey = openaiApiKeyInput.value.trim();
+            userSettings.openaiBaseUrl = openaiBaseUrl || 'https://api.openai.com';
+            userSettings.defaultModel = defaultModelSelect.value;
+
+            saveUserSettings();
+            showAppMessage('设置保存成功！', 'info');
+            closeSettingsModal();
+        }
+
+        // Settings modal event listeners
+        settingsBtn.addEventListener('click', openSettingsModal);
+        settingsCancelBtn.addEventListener('click', closeSettingsModal);
+        settingsSaveBtn.addEventListener('click', saveSettingsFromModal);
+
+        // Close settings modal when clicking outside
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                closeSettingsModal();
+            }
+        });
+
+        // --- Data Import/Export ---
+        function exportData() {
+            const data = {
+                conversations: conversations,
+                userSettings: userSettings,
+                currentMode: currentMode,
+                exportDate: new Date().toISOString(),
+                version: '1.0'
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mj-chat-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showAppMessage('数据导出成功！', 'info');
+        }
+
+        function importData() {
+            importFileInput.click();
+        }
+
+        function handleImportFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    if (data.conversations) {
+                        conversations = data.conversations;
+                        saveConversations();
+                    }
+
+                    if (data.userSettings) {
+                        userSettings = { ...userSettings, ...data.userSettings };
+                        saveUserSettings();
+                    }
+
+                    if (data.currentMode) {
+                        currentMode = data.currentMode;
+                        saveCurrentMode();
+                    }
+
+                    // 重新加载界面
+                    updateModeDisplay();
+                    renderConversationsList();
+                    loadSettingsToModal();
+
+                    showAppMessage('数据导入成功！', 'info');
+                } catch (error) {
+                    console.error('Import failed:', error);
+                    showAppMessage('数据导入失败，文件格式错误！', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Data management event listeners
+        exportDataBtn.addEventListener('click', exportData);
+        importDataBtn.addEventListener('click', importData);
+        importFileInput.addEventListener('change', handleImportFile);
+
+        // --- Conversation Management ---
+        function loadConversationsFromStorage() {
+            loadConversations();
+            renderConversationsList();
+        }
+
+        function renderConversationsList() {
+            conversationsList.innerHTML = '';
+
+            // 过滤当前模式的对话
+            const filteredConversations = conversations.filter(conv => conv.mode === currentMode);
+
+            if (filteredConversations.length === 0) {
+                const modeText = currentMode === 'mj' ? 'MJ画图' : 'AI对话';
+                conversationsList.innerHTML = `<div style="text-align: center; color: #7f8c8d; padding: 20px;">暂无${modeText}历史</div>`;
+                return;
+            }
+
+            filteredConversations
+                .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+                .forEach(conv => {
+                    const item = document.createElement('div');
+                    item.className = 'conversation-item';
+                    if (conv.id === currentConversationId) {
+                        item.classList.add('active');
+                    }
+
+                    const modeIcon = conv.mode === 'mj' ? '🎨' : '💬';
+                    const modeClass = conv.mode === 'mj' ? 'mode-mj' : 'mode-ai';
+
+                    item.innerHTML = `
+                        <div class="conversation-title">${conv.title}</div>
+                        <div class="conversation-meta">
+                            <span>${conv.messages.length} 条消息 • ${formatDate(conv.updatedAt)}</span>
+                            <span class="conversation-mode-icon ${modeClass}">${modeIcon}</span>
+                        </div>
+                    `;
+
+                    item.addEventListener('click', () => loadConversationFromStorage(conv.id));
+                    conversationsList.appendChild(item);
+                });
+        }
+
+        function createNewConversation() {
+            const conversationId = Date.now().toString();
+            const conversation = {
+                id: conversationId,
+                userId: userId,
+                title: currentMode === 'mj' ? '新的画图对话' : '新的AI对话',
+                mode: currentMode,
+                messages: [],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            conversations.push(conversation);
+            currentConversationId = conversationId;
+
+            saveConversations();
+            saveCurrentConversationId();
+            clearMessages();
+            renderConversationsList();
+
+            const modeText = currentMode === 'mj' ? 'MJ画图' : 'AI对话';
+            showAppMessage(`创建新${modeText}对话成功！`, 'info');
+        }
+
+        function loadConversationFromStorage(conversationId) {
+            const conversation = conversations.find(conv => conv.id === conversationId);
+            if (!conversation) {
+                showAppMessage('对话不存在！', 'error');
+                return;
+            }
+
+            currentConversationId = conversationId;
+            saveCurrentConversationId();
+            loadMessagesFromConversation(conversation);
+            renderConversationsList(); // 更新活跃状态
+            updateModeDisplay(); // 更新总结按钮显示
+        }
+
+        function saveCurrentConversation() {
+            if (!currentConversationId) return;
+
+            const conversation = conversations.find(conv => conv.id === currentConversationId);
+            if (!conversation) return;
+
+            const messages = Array.from(messagesContainer.children)
+                .filter(el => el.classList.contains('message'))
+                .map(el => ({
+                    type: el.dataset.messageType || (el.classList.contains('user-message') ? 'user' : 'system'),
+                    content: el.querySelector('.message-content').innerHTML,
+                    timestamp: el.querySelector('.message-timestamp').textContent,
+                    model: el.dataset.model || null
+                }));
+
+            conversation.messages = messages;
+            conversation.updatedAt = new Date().toISOString();
+
+            saveConversations();
+        }
+
+        async function generateConversationTitle() {
+            if (!currentConversationId || !userSettings.openaiApiKey) return;
+
+            const messages = Array.from(messagesContainer.children)
+                .filter(el => el.classList.contains('message'))
+                .slice(0, 4) // 只取前几条消息
+                .map(el => {
+                    const content = el.querySelector('.message-prompt')?.textContent ||
+                                  el.querySelector('.message-content').textContent;
+                    return content.replace(/\s+/g, ' ').trim();
+                })
+                .join(' ');
+
+            if (!messages) return;
+
+            try {
+                const response = await fetch('/api/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userSettings.openaiApiKey}`,
+                        'base-url': userSettings.openaiBaseUrl || 'https://api.openai.com'
+                    },
+                    body: JSON.stringify({
+                        model: userSettings.defaultModel || 'gpt-3.5-turbo',
+                        messages: [{
+                            role: 'user',
+                            content: `请为以下对话内容生成一个简短的标题（不超过20个字符）：${messages}`
+                        }],
+                        max_tokens: 50,
+                        temperature: 0.7
+                    })
+                });
+
+                const data = await response.json();
+                if (data.choices && data.choices[0]) {
+                    const title = data.choices[0].message.content.trim().replace(/["""]/g, '');
+
+                    const conversation = conversations.find(conv => conv.id === currentConversationId);
+                    if (conversation) {
+                        conversation.title = title;
+                        saveConversations();
+                        renderConversationsList();
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to generate title:', error);
+            }
+        }
+
+        // --- AI Chat Functions ---
+        async function sendAIMessage(prompt) {
+            if (!userSettings.openaiApiKey) {
+                showAppMessage('请先配置 OpenAI API Key', 'error');
+                return;
+            }
+
+            errorDiv.textContent = '';
+            loadingDiv.style.display = 'block';
+            appMessageBoxElement.style.display = 'none';
+
+            // Add user message
+            const userContent = `<div class="message-prompt">${prompt}</div>`;
+            const { messageDiv: userMessage } = createMessage('user', userContent);
+            addMessage(userMessage);
+
+            // Add loading AI message
+            const loadingContent = '<p style="color: #f39c12;">🤔 AI正在思考，请稍候...</p>';
+            const { messageDiv: loadingMessage } = createMessage('ai', loadingContent, new Date(), userSettings.defaultModel);
+            addMessage(loadingMessage);
+
+            try {
+                const response = await fetch('/api/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userSettings.openaiApiKey}`,
+                        'base-url': userSettings.openaiBaseUrl || 'https://api.openai.com'
+                    },
+                    body: JSON.stringify({
+                        model: userSettings.defaultModel || 'gpt-3.5-turbo',
+                        messages: [{
+                            role: 'user',
+                            content: prompt
+                        }],
+                        max_tokens: 2000,
+                        temperature: 0.7
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.choices && data.choices[0]) {
+                    const aiResponse = data.choices[0].message.content;
+                    const parsedResponse = parseThinkingResponse(aiResponse);
+
+                    let responseContent;
+                    if (parsedResponse.hasThinking) {
+                        responseContent = createThinkingSection(
+                            parsedResponse.thinking,
+                            parsedResponse.thinkingTime,
+                            parsedResponse.response
+                        );
+                    } else {
+                        responseContent = `<div class="markdown-content">${renderMarkdown(aiResponse)}</div>`;
+                    }
+
+                    loadingMessage.querySelector('.message-content').innerHTML = responseContent;
+
+                    // 初始化代码高亮
+                    if (typeof hljs !== 'undefined') {
+                        loadingMessage.querySelectorAll('pre code').forEach((block) => {
+                            hljs.highlightElement(block);
+                        });
+                    }
+
+                    showAppMessage('AI回复成功！', 'info');
+
+                    // 保存对话并生成标题
+                    saveCurrentConversation();
+                    await generateConversationTitle();
+                    renderConversationsList();
+                } else {
+                    loadingMessage.querySelector('.message-content').innerHTML = `<p style="color: #e74c3c;">❌ AI回复失败：${data.error?.message || data.error || '未知错误'}</p>`;
+                    showAppMessage(`AI回复失败：${data.error?.message || data.error || '未知错误'}`, 'error');
+                }
+            } catch (error) {
+                console.error('AI chat error:', error);
+                loadingMessage.querySelector('.message-content').innerHTML = '<p>请求失败，请检查网络连接。</p>';
+                errorDiv.textContent = '请求失败，请检查控制台。';
+            } finally {
+                loadingDiv.style.display = 'none';
+                saveCurrentConversation();
+                updateModeDisplay(); // 更新总结按钮显示
+            }
+        }
+
+        // --- Conversation Summary ---
+        async function summarizeConversation() {
+            if (!userSettings.openaiApiKey) {
+                showAppMessage('请先配置 OpenAI API Key', 'error');
+                return;
+            }
+
+            const messages = Array.from(messagesContainer.children)
+                .filter(el => el.classList.contains('message'))
+                .map(el => {
+                    const type = el.classList.contains('user-message') ? '用户' : '系统';
+                    const content = el.querySelector('.message-prompt')?.textContent ||
+                                  el.querySelector('.message-content').textContent.replace(/<[^>]*>/g, '');
+                    return `${type}: ${content}`;
+                })
+                .join('\n');
+
+            if (!messages) {
+                showAppMessage('没有对话内容可以总结', 'error');
+                return;
+            }
+
+            summarizeButton.textContent = '总结中...';
+            summarizeButton.disabled = true;
+
+            try {
+                const response = await fetch('/api/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userSettings.openaiApiKey}`,
+                        'base-url': userSettings.openaiBaseUrl || 'https://api.openai.com'
+                    },
+                    body: JSON.stringify({
+                        model: userSettings.defaultModel || 'gpt-3.5-turbo',
+                        messages: [{
+                            role: 'user',
+                            content: `请对以下对话内容进行总结，突出重点和关键信息：\n\n${messages}`
+                        }],
+                        max_tokens: 1000,
+                        temperature: 0.3
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.choices && data.choices[0]) {
+                    const summary = data.choices[0].message.content;
+                    const summaryContent = `
+                        <div style="background-color: #34495e; padding: 15px; border-radius: 8px; border-left: 4px solid #f1c40f;">
+                            <h4 style="color: #f1c40f; margin: 0 0 10px 0;">📋 对话总结</h4>
+                            <div style="color: #ecf0f1; line-height: 1.6;">${summary.replace(/\n/g, '<br>')}</div>
+                        </div>
+                    `;
+
+                    const { messageDiv: summaryMessage } = createMessage('system', summaryContent);
+                    addMessage(summaryMessage);
+
+                    saveCurrentConversation();
+                    showAppMessage('对话总结生成成功！', 'info');
+                } else {
+                    showAppMessage(`总结失败：${data.error?.message || data.error || '未知错误'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Summary error:', error);
+                showAppMessage('总结失败，请检查网络连接', 'error');
+            } finally {
+                summarizeButton.textContent = '总结对话';
+                summarizeButton.disabled = false;
+            }
+        }
+
+        summarizeButton.addEventListener('click', summarizeConversation);
+
+
+
+        // --- Markdown渲染和思考过程处理 ---
+        function initializeMarkdown() {
+            if (typeof marked !== 'undefined') {
+                marked.setOptions({
+                    highlight: function(code, lang) {
+                        if (typeof hljs !== 'undefined' && lang && hljs.getLanguage(lang)) {
+                            try {
+                                return hljs.highlight(code, { language: lang }).value;
+                            } catch (err) {}
+                        }
+                        return code;
+                    },
+                    breaks: true,
+                    gfm: true
+                });
+            }
+        }
+
+        function renderMarkdown(text) {
+            if (typeof marked === 'undefined') {
+                return text.replace(/\n/g, '<br>');
+            }
+            return marked.parse(text);
+        }
+
+        function parseThinkingResponse(content) {
+            // 检查是否包含思考过程标记
+            const thinkingRegex = /<thinking>([\s\S]*?)<\/thinking>/i;
+            const match = content.match(thinkingRegex);
+
+            if (match) {
+                const thinkingContent = match[1].trim();
+                const finalResponse = content.replace(thinkingRegex, '').trim();
+
+                return {
+                    hasThinking: true,
+                    thinking: thinkingContent,
+                    response: finalResponse,
+                    thinkingTime: estimateThinkingTime(thinkingContent)
+                };
+            }
+
+            return {
+                hasThinking: false,
+                thinking: '',
+                response: content,
+                thinkingTime: 0
+            };
+        }
+
+        function estimateThinkingTime(thinkingContent) {
+            // 基于内容长度估算思考时间（仅用于展示）
+            const wordCount = thinkingContent.split(/\s+/).length;
+            return Math.max(1, Math.round(wordCount / 50)); // 假设每秒处理50个词
+        }
+
+        function createThinkingSection(thinking, thinkingTime, response) {
+            const thinkingId = 'thinking-' + Date.now();
+
+            return `
+                <div class="thinking-section">
+                    <div class="thinking-header" onclick="toggleThinking('${thinkingId}')">
+                        <div class="thinking-title">
+                            <span>🤔</span>
+                            <span>思考过程</span>
+                        </div>
+                        <div class="thinking-stats">
+                            <span>${thinkingTime}秒思考时间</span>
+                            <span class="thinking-toggle" id="${thinkingId}-toggle">▼</span>
+                        </div>
+                    </div>
+                    <div class="thinking-content" id="${thinkingId}-content">
+                        <div class="markdown-content">${renderMarkdown(thinking)}</div>
+                    </div>
+                </div>
+                <div class="final-response">
+                    <div class="markdown-content">${renderMarkdown(response)}</div>
+                </div>
+            `;
+        }
+
+        function toggleThinking(thinkingId) {
+            const content = document.getElementById(thinkingId + '-content');
+            const toggle = document.getElementById(thinkingId + '-toggle');
+
+            if (content && toggle) {
+                content.classList.toggle('expanded');
+                toggle.classList.toggle('expanded');
+            }
+        }
+
+        // 全局函数，供HTML调用
+        window.toggleThinking = toggleThinking;
+
+        function loadMessagesFromConversation(conversation) {
+            clearMessages();
+
+            conversation.messages.forEach(msg => {
+                const { messageDiv } = createMessage(
+                    msg.type,
+                    msg.content,
+                    new Date(msg.timestamp),
+                    msg.model
+                );
+                messagesContainer.appendChild(messageDiv);
+            });
+
+            // Scroll to bottom
+            const messagesWrapper = document.querySelector('.messages-wrapper');
+            messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
+        }
+
+        function clearMessages() {
+            messagesContainer.innerHTML = '<div class="empty-state"><p>开始对话，生成的图片将显示在这里</p></div>';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diff = now - date;
+
+            if (diff < 60000) return '刚刚';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
+            return `${Math.floor(diff / 86400000)}天前`;
+        }
+
+        // Event listeners
+        newChatBtn.addEventListener('click', createNewConversation);
+
+
+        function showMessage(msg, type = 'info', targetBox = modalMessageBox) {
+            targetBox.textContent = msg;
+            targetBox.style.display = 'block';
+            if (type === 'error') {
+                targetBox.style.backgroundColor = '#e74c3c';
+                targetBox.style.color = 'white';
+            } else {
+                targetBox.style.backgroundColor = '#f1c40f';
+                targetBox.style.color = '#2c3e50';
+            }
+            setTimeout(() => {
+                targetBox.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showAppMessage(msg, type = 'info') {
+            showMessage(msg, type, appMessageBoxElement);
+        }
+
+        if (!isAuthenticated) {
+            authModal.style.display = 'flex';
+            showMessage('请先输入访问密码进行认证。', 'info', modalMessageBox);
+        }
+
+        authConfirmBtn.addEventListener('click', async () => {
+            const password = accessCodeInput.value;
+            if (!password) {
+                showMessage('密码不能为空！', 'error', modalMessageBox);
+                return;
+            }
+            try {
+                const response = await fetch('/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    isAuthenticated = true;
+                    localStorage.setItem('isAuthenticated', 'true');
+                    authModal.style.display = 'none';
+                    errorDiv.textContent = '';
+                    showAppMessage('认证成功！', 'info');
+
+                    // 认证成功后加载数据
+                    loadUserSettings();
+                    loadCurrentMode();
+                    loadCurrentConversationId();
+                    loadConversationsFromStorage();
+                    updateModeDisplay();
+
+                    if (currentConversationId) {
+                        loadConversationFromStorage(currentConversationId);
+                    }
+                } else {
+                    showMessage(`认证失败: ${data.error || '密码错误'}`, 'error', modalMessageBox);
+                    accessCodeInput.value = '';
+                }
+            } catch (error) {
+                console.error('认证请求失败:', error);
+                showMessage('认证请求失败，请检查网络连接。', 'error', modalMessageBox);
+            }
+        });
+
+        generateButton.addEventListener('click', async () => {
+            const prompt = promptInput.value;
+            if (!isAuthenticated) {
+                authModal.style.display = 'flex';
+                showMessage('请先输入访问密码进行认证，然后才能生成内容。', 'error', modalMessageBox);
+                return;
+            }
+            if (!prompt.trim()) {
+                const actionText = currentMode === 'mj' ? '图像描述' : '对话内容';
+                showAppMessage(`请输入${actionText}！`, 'error');
+                promptInput.focus();
+                return;
+            }
+
+            // 如果没有当前对话，创建新对话
+            if (!currentConversationId) {
+                createNewConversation();
+            }
+
+            if (currentMode === 'mj') {
+                await generateImage(prompt);
+            } else {
+                await sendAIMessage(prompt);
+            }
+
+            clearPromptInput();
+        });
+
+        // Add Enter key support for prompt input
+        promptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                generateButton.click();
+            }
+        });
+
+        // Helper function to create message elements
+        function createMessage(type, content, timestamp = new Date(), model = null) {
+            const messageId = ++messageIdCounter;
+            const messageDiv = document.createElement('div');
+
+            // 确定消息类型和样式
+            let messageClass, typeLabel;
+            if (type === 'user') {
+                messageClass = 'user-message';
+                typeLabel = '用户输入';
+            } else if (type === 'ai') {
+                messageClass = 'ai-message';
+                typeLabel = model ? `AI回复 (${model})` : 'AI回复';
+            } else {
+                messageClass = 'system-message';
+                typeLabel = '系统响应';
+            }
+
+            messageDiv.className = `message ${messageClass}`;
+            messageDiv.dataset.messageId = messageId;
+            messageDiv.dataset.messageType = type;
+            if (model) messageDiv.dataset.model = model;
+
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'message-header';
+            headerDiv.innerHTML = `
+                <span class="message-type">${typeLabel}</span>
+                <span class="message-timestamp">${timestamp.toLocaleTimeString()}</span>
+            `;
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'message-actions';
+
+            // 添加编辑按钮（用户消息和AI消息可编辑）
+            if (type === 'user' || type === 'ai') {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'message-action-btn';
+                editBtn.innerHTML = '✏️';
+                editBtn.title = '编辑消息';
+                editBtn.onclick = () => editMessage(messageDiv);
+                actionsDiv.appendChild(editBtn);
+            }
+
+            // 添加重新生成按钮（仅AI消息）
+            if (type === 'ai') {
+                const regenerateBtn = document.createElement('button');
+                regenerateBtn.className = 'message-action-btn';
+                regenerateBtn.innerHTML = '🔄';
+                regenerateBtn.title = '重新生成';
+                regenerateBtn.onclick = () => regenerateMessage(messageDiv);
+                actionsDiv.appendChild(regenerateBtn);
+            }
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = content;
+
+            messageDiv.appendChild(headerDiv);
+            messageDiv.appendChild(actionsDiv);
+            messageDiv.appendChild(contentDiv);
+
+            return { messageDiv, messageId };
+        }
+
+        // Helper function to add message to container
+        function addMessage(messageDiv) {
+            // Remove empty state if it exists
+            const emptyState = messagesContainer.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            messagesContainer.appendChild(messageDiv);
+            // Scroll to bottom
+            const messagesWrapper = document.querySelector('.messages-wrapper');
+            messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
+        }
+
+        // Message editing functionality
+        function editMessage(messageDiv) {
+            const contentDiv = messageDiv.querySelector('.message-content');
+            const originalContent = contentDiv.innerHTML;
+            const messageType = messageDiv.dataset.messageType;
+
+            // 提取纯文本内容
+            let textContent;
+            if (messageType === 'user') {
+                const promptDiv = contentDiv.querySelector('.message-prompt');
+                textContent = promptDiv ? promptDiv.textContent : contentDiv.textContent;
+            } else {
+                textContent = contentDiv.textContent;
+            }
+
+            // 创建编辑界面
+            contentDiv.classList.add('editing');
+            contentDiv.innerHTML = `
+                <textarea class="message-edit-textarea" placeholder="编辑消息内容...">${textContent}</textarea>
+                <div class="message-edit-actions">
+                    <button class="edit-btn cancel">取消</button>
+                    <button class="edit-btn save">保存</button>
+                </div>
+            `;
+
+            const textarea = contentDiv.querySelector('.message-edit-textarea');
+            const saveBtn = contentDiv.querySelector('.save');
+            const cancelBtn = contentDiv.querySelector('.cancel');
+
+            // 自动调整高度
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+            textarea.focus();
+
+            // 保存编辑
+            saveBtn.onclick = () => {
+                const newText = textarea.value.trim();
+                if (!newText) {
+                    showAppMessage('消息内容不能为空', 'error');
+                    return;
+                }
+
+                contentDiv.classList.remove('editing');
+                if (messageType === 'user') {
+                    contentDiv.innerHTML = `<div class="message-prompt">${newText}</div>`;
+                } else {
+                    contentDiv.innerHTML = `<div style="color: #ecf0f1; line-height: 1.6;">${newText.replace(/\n/g, '<br>')}</div>`;
+                }
+
+                saveCurrentConversation();
+                showAppMessage('消息已更新', 'info');
+            };
+
+            // 取消编辑
+            cancelBtn.onclick = () => {
+                contentDiv.classList.remove('editing');
+                contentDiv.innerHTML = originalContent;
+            };
+
+            // Enter + Ctrl 保存
+            textarea.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault();
+                    saveBtn.click();
+                }
+            });
+        }
+
+        // Message regeneration functionality
+        async function regenerateMessage(messageDiv) {
+            if (!userSettings.openaiApiKey) {
+                showAppMessage('请先配置 OpenAI API Key', 'error');
+                return;
+            }
+
+            const contentDiv = messageDiv.querySelector('.message-content');
+            const originalContent = contentDiv.innerHTML;
+
+            // 获取用户的最后一条消息作为prompt
+            const userMessages = Array.from(messagesContainer.children)
+                .filter(el => el.classList.contains('message') && el.dataset.messageType === 'user');
+
+            if (userMessages.length === 0) {
+                showAppMessage('没有找到用户消息', 'error');
+                return;
+            }
+
+            const lastUserMessage = userMessages[userMessages.length - 1];
+            const promptDiv = lastUserMessage.querySelector('.message-prompt');
+            const prompt = promptDiv ? promptDiv.textContent : '请继续对话';
+
+            // 显示重新生成状态
+            contentDiv.innerHTML = '<p style="color: #f39c12;">🔄 正在重新生成回复...</p>';
+
+            try {
+                const response = await fetch('/api/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userSettings.openaiApiKey}`,
+                        'base-url': userSettings.openaiBaseUrl || 'https://api.openai.com'
+                    },
+                    body: JSON.stringify({
+                        model: userSettings.defaultModel || 'gpt-3.5-turbo',
+                        messages: [{
+                            role: 'user',
+                            content: prompt
+                        }],
+                        max_tokens: 2000,
+                        temperature: 0.8 // 稍高的温度以获得不同的回复
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.choices && data.choices[0]) {
+                    const aiResponse = data.choices[0].message.content;
+                    const parsedResponse = parseThinkingResponse(aiResponse);
+
+                    let responseContent;
+                    if (parsedResponse.hasThinking) {
+                        responseContent = createThinkingSection(
+                            parsedResponse.thinking,
+                            parsedResponse.thinkingTime,
+                            parsedResponse.response
+                        );
+                    } else {
+                        responseContent = `<div class="markdown-content">${renderMarkdown(aiResponse)}</div>`;
+                    }
+
+                    contentDiv.innerHTML = responseContent;
+
+                    // 初始化代码高亮
+                    if (typeof hljs !== 'undefined') {
+                        contentDiv.querySelectorAll('pre code').forEach((block) => {
+                            hljs.highlightElement(block);
+                        });
+                    }
+
+                    saveCurrentConversation();
+                    showAppMessage('回复已重新生成', 'info');
+                } else {
+                    contentDiv.innerHTML = originalContent;
+                    showAppMessage(`重新生成失败：${data.error?.message || data.error || '未知错误'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Regenerate error:', error);
+                contentDiv.innerHTML = originalContent;
+                showAppMessage('重新生成失败，请检查网络连接', 'error');
+            }
+        }
+
+        // Helper function to render action buttons for a message
+        function renderMessageButtons(messageDiv, buttons, taskId) {
+            const buttonsDiv = document.createElement('div');
+            buttonsDiv.className = 'message-buttons';
+
+            if (buttons && buttons.length > 0) {
+                buttons.forEach(buttonData => {
+                    const btn = document.createElement('button');
+                    btn.textContent = buttonData.label || buttonData.emoji;
+                    btn.addEventListener('click', () => performAction(buttonData.customId, taskId, messageDiv));
+                    buttonsDiv.appendChild(btn);
+                });
+            }
+
+            messageDiv.appendChild(buttonsDiv);
+        }
+
+        // Helper function to add download button
+        function addDownloadButton(messageDiv, imageUrl) {
+            const downloadDiv = document.createElement('div');
+            downloadDiv.className = 'message-download';
+
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = '下载图片';
+            downloadBtn.addEventListener('click', () => {
+                window.location.href = `/download-image?url=${encodeURIComponent(imageUrl)}`;
+            });
+
+            downloadDiv.appendChild(downloadBtn);
+            messageDiv.appendChild(downloadDiv);
+        }
+
+        async function generateImage(prompt) {
+            errorDiv.textContent = '';
+            loadingDiv.style.display = 'block';
+            appMessageBoxElement.style.display = 'none';
+
+            // Add user message
+            const userContent = `<div class="message-prompt">${prompt}</div>`;
+            const { messageDiv: userMessage } = createMessage('user', userContent);
+            addMessage(userMessage);
+
+            // Add loading system message
+            const loadingContent = '<p>正在生成图片，请稍候...</p>';
+            const { messageDiv: loadingMessage, messageId } = createMessage('system', loadingContent);
+            addMessage(loadingMessage);
+
+            try {
+                const response = await fetch('/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.imageUrl) {
+                        // Update loading message with result
+                        const imageContent = `
+                            <div class="message-image">
+                                <img src="${data.imageUrl}" alt="Generated Image" onclick="openImagePreview('${data.imageUrl}')">
+                            </div>
+                        `;
+                        loadingMessage.querySelector('.message-content').innerHTML = imageContent;
+
+                        // Add action buttons
+                        renderMessageButtons(loadingMessage, data.buttons, data.taskId);
+
+                        // Add download button
+                        addDownloadButton(loadingMessage, data.imageUrl);
+
+                        showAppMessage('图片生成成功！', 'info');
+
+                        // 保存对话并生成标题
+                        saveCurrentConversation();
+                        await generateConversationTitle();
+                        renderConversationsList();
+                    } else {
+                        loadingMessage.querySelector('.message-content').innerHTML = '<p>图片生成失败：未返回图片URL。</p>';
+                        showAppMessage('图片生成失败：未返回图片URL。', 'error');
+                    }
+                } else {
+                    loadingMessage.querySelector('.message-content').innerHTML = `<p>错误: ${data.error || '未知错误'}</p>`;
+                    errorDiv.textContent = `错误: ${data.error || '未知错误'}`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                loadingMessage.querySelector('.message-content').innerHTML = '<p>请求失败，请检查网络连接。</p>';
+                errorDiv.textContent = '请求失败，请检查控制台。';
+            } finally {
+                loadingDiv.style.display = 'none';
+                // 即使失败也保存对话
+                saveCurrentConversation();
+                updateModeDisplay(); // 更新总结按钮显示
+            }
+        }
+
+        async function performAction(customId, taskId, sourceMessageDiv) {
+            if (!taskId) {
+                showAppMessage('没有任务ID可执行操作。', 'error');
+                return;
+            }
+            if (!isAuthenticated) {
+                authModal.style.display = 'flex';
+                showMessage('请先输入访问密码进行认证，然后才能执行操作。', 'error', modalMessageBox);
+                return;
+            }
+
+            errorDiv.textContent = '';
+            loadingDiv.style.display = 'block';
+            appMessageBoxElement.style.display = 'none';
+
+            // Add loading system message for the action
+            const actionContent = '<p>正在执行操作，请稍候...</p>';
+            const { messageDiv: actionMessage } = createMessage('system', actionContent);
+            addMessage(actionMessage);
+
+            try {
+                const response = await fetch('/perform-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customId, taskId })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.imageUrl) {
+                        // Update action message with result
+                        const imageContent = `
+                            <div class="message-image">
+                                <img src="${data.imageUrl}" alt="Action Result Image" onclick="openImagePreview('${data.imageUrl}')">
+                            </div>
+                        `;
+                        actionMessage.querySelector('.message-content').innerHTML = imageContent;
+
+                        // Add action buttons for the new image
+                        renderMessageButtons(actionMessage, data.buttons, data.taskId);
+
+                        // Add download button
+                        addDownloadButton(actionMessage, data.imageUrl);
+
+                        showAppMessage('操作执行成功！', 'info');
+
+                        // 保存对话
+                        saveCurrentConversation();
+                        renderConversationsList();
+                    } else {
+                        actionMessage.querySelector('.message-content').innerHTML = '<p>操作失败：未返回图片URL。</p>';
+                        showAppMessage('操作失败：未返回图片URL。', 'error');
+                    }
+                } else {
+                    actionMessage.querySelector('.message-content').innerHTML = `<p>错误: ${data.error || '未知错误'}</p>`;
+                    errorDiv.textContent = `错误: ${data.error || '未知错误'}`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                actionMessage.querySelector('.message-content').innerHTML = '<p>请求失败，请检查网络连接。</p>';
+                errorDiv.textContent = '请求失败，请检查控制台。';
+            } finally {
+                loadingDiv.style.display = 'none';
+                // 即使失败也保存对话
+                saveCurrentConversation();
+            }
+        }
+
+        // Clear prompt input after successful generation
+        function clearPromptInput() {
+            promptInput.value = '';
+            autoResizeTextarea();
+        }
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始化Markdown渲染
+            initializeMarkdown();
+
+            // 检查认证状态
+            if (isAuthenticated) {
+                authModal.style.display = 'none';
+
+                // 加载本地存储的数据
+                loadUserSettings();
+                loadCurrentMode();
+                loadCurrentConversationId();
+                loadConversationsFromStorage();
+
+                // 更新界面
+                updateModeDisplay();
+
+                // 如果有当前对话ID，加载对话内容
+                if (currentConversationId) {
+                    loadConversationFromStorage(currentConversationId);
+                }
+            } else {
+                authModal.style.display = 'flex';
+                showMessage('请先输入访问密码进行认证。', 'info', modalMessageBox);
+            }
+        });
+    </script>
+</body>
+</html>
